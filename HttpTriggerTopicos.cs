@@ -48,14 +48,39 @@ namespace My.Functions
             }
         
         }
+        [FunctionName("ObtenerPersonas")]
+        public static async Task<IActionResult> Obtener(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
+            ILogger log)
+        {
+            var clusterMongo= new MongoClient(System.Environment.GetEnvironmentVariable("MongoDBAtlasCString"));
+            var dbase=clusterMongo.GetDatabase("ClaseAzuero");
+            var coleccion=dbase.GetCollection<Persona>("Personas");
 
-        [FunctionName("actualizarPersona")]
+            try
+            {
+                //Creo una variable tipo filter correspondiente a la coleccion Persona
+                var filtro=Builders<Persona>.Filter;
+                //para obtener todos los elementos debemos hacer un filtro vacio 
+                var resultados= await coleccion.FindAsync<Persona>(filtro.Empty);
+                //Retorno la lista de documentos de la coleccion Persona
+                return new OkObjectResult(resultados.ToList());
+            }
+            catch (System.Exception e)
+            {
+                
+                return new BadRequestObjectResult("Hubo un error al insertar "+e.Message);
+            }
+        
+        }
+
+        [FunctionName("ActualizarPersona")]
         public static async Task<IActionResult> Actualizar(
             [HttpTrigger(AuthorizationLevel.Anonymous,"put", Route = null)] HttpRequest req,
             ILogger log)
         {
-            int edadAgregar=0;
-            edadAgregar=Int32.Parse(req.Query["edad"]);
+            int edadAgregar=Int32.Parse(req.Query["edad"]);
+            String nombre=req.Query["nombre"];
 
             var clusterMongo= new MongoClient(System.Environment.GetEnvironmentVariable("MongoDBAtlasCString"));
             var dbase=clusterMongo.GetDatabase("ClaseAzuero");
@@ -65,7 +90,7 @@ namespace My.Functions
             //otra forma
             //var filtro =new FilterDefinitionBuilder<Persona>().Where(r=>r.edad==edadAgregar);
 
-            var update=Builders<Persona>.Update.Set("nombre","JoseL");
+            var update=Builders<Persona>.Update.Set("nombre",nombre);
 
 
             try
@@ -82,13 +107,12 @@ namespace My.Functions
             }
         
         }
-        [FunctionName("eliminarPersona")]
+        [FunctionName("EliminarPersona")]
         public static async Task<IActionResult> eliminarPersona(
             [HttpTrigger(AuthorizationLevel.Anonymous,"delete", Route = null)] HttpRequest req,
             ILogger log)
         {
-            int edadAgregar=0;
-            edadAgregar=Int32.Parse(req.Query["edad"]);
+            int edadAgregar=Int32.Parse(req.Query["edad"]);
 
             var clusterMongo= new MongoClient(System.Environment.GetEnvironmentVariable("MongoDBAtlasCString"));
             var dbase=clusterMongo.GetDatabase("ClaseAzuero");
